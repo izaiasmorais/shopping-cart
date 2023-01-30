@@ -70,11 +70,43 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 		localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
 	};
 
-	const removeProduct = async (productId: number) => {
+	const removeProduct = (productId: number) => {
 		try {
-			await api.get<Stock>(`/stock/${productId}`);
+			const productIndex = newCart.findIndex(
+				(product) => product.id === productId
+			);
+
+			if (productIndex < 0) {
+				toast.error("Erro na remoção do produto");
+				return;
+			}
+
+			const anotherCart = newCart
+				.slice(0, productIndex)
+				.concat(newCart.slice(productIndex + 1));
+
+			setCart(anotherCart);
+
+			toast.success("Produto removido com sucesso!");
+
+			localStorage.setItem("@RocketShoes:cart", JSON.stringify(anotherCart));
 		} catch (error) {
 			toast.error("Erro na remoção do produto");
+		}
+	};
+
+	const updateProductAmount = async ({
+		productId,
+		amount,
+	}: UpdateProductAmount) => {
+		let productStock = 0;
+
+		try {
+			const { data: StockInfo } = await api.get<Stock>(`/stock/${productId}`);
+
+			productStock = StockInfo.amount;
+		} catch (error) {
+			toast.error("Erro na alteração de quantidade do produto");
 			return;
 		}
 
@@ -82,24 +114,33 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 			(product) => product.id === productId
 		);
 
-		newCart.splice(productIndex);
+		if (productIndex < 0) {
+			toast.error("Erro na alteração de quantidade do produto");
+			return;
+		}
+
+		const productAmount = newCart[productIndex].amount;
+
+		if (amount < productAmount) {
+			if (productAmount === 1) {
+				return;
+			} else {
+				newCart[productIndex].amount = amount;
+			}
+		}
+
+		if (amount > productAmount) {
+			if (productAmount >= productStock) {
+				toast.error("Quantidade solicitada fora de estoque");
+				return;
+			} else {
+				newCart[productIndex].amount = amount;
+			}
+		}
 
 		setCart(newCart);
 
-		toast.success("Produto removido com sucesso!");
-
 		localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
-	};
-
-	const updateProductAmount = async ({
-		productId,
-		amount,
-	}: UpdateProductAmount) => {
-		try {
-			// TODO
-		} catch {
-			// TODO
-		}
 	};
 
 	return (
