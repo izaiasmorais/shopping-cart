@@ -7,9 +7,9 @@
 </div>
 
 ### ⚙️ Funcionalidades
-- [ ] Adicionar itens ao carrinho
-- [ ] Controle de estoque
-- [ ] Valores e quantidades reativas
-- [ ] Incrementar itens no carrinho
-- [ ] Decrementar itens no carrinho
-- [ ] Remover completamente itens do carrinho
+- [x] Adicionar itens ao carrinho
+- [x] Controle de estoque
+- [x] Valores e quantidades reativas
+- [x] Incrementar itens no carrinho
+- [x] Decrementar itens no carrinho
+- [x] Remover completamente itens do carrinho
