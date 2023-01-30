@@ -1,23 +1,13 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "../services/api";
-import { Product, Stock } from "../types";
-
-interface CartProviderProps {
-	children: ReactNode;
-}
-
-interface UpdateProductAmount {
-	productId: number;
-	amount: number;
-}
-
-interface CartContextData {
-	cart: Product[];
-	addProduct: (productId: number) => Promise<void>;
-	removeProduct: (productId: number) => void;
-	updateProductAmount: ({ productId, amount }: UpdateProductAmount) => void;
-}
+import {
+	CartContextData,
+	CartProviderProps,
+	Product,
+	Stock,
+	UpdateProductAmount,
+} from "../types";
 
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
@@ -75,15 +65,30 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
 		setCart(newCart);
 
+		toast.success("Produto adicionado com sucesso!");
+
 		localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
 	};
 
-	const removeProduct = (productId: number) => {
+	const removeProduct = async (productId: number) => {
 		try {
-			// TODO
-		} catch {
-			// TODO
+			await api.get<Stock>(`/stock/${productId}`);
+		} catch (error) {
+			toast.error("Erro na remoção do produto");
+			return;
 		}
+
+		const productIndex = newCart.findIndex(
+			(product) => product.id === productId
+		);
+
+		newCart.splice(productIndex);
+
+		setCart(newCart);
+
+		toast.success("Produto removido com sucesso!");
+
+		localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
 	};
 
 	const updateProductAmount = async ({

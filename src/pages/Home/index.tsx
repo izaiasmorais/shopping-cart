@@ -25,34 +25,39 @@ const Home = (): JSX.Element => {
 	const [products, setProducts] = useState<ProductFormatted[]>([]);
 	const { addProduct, cart } = useCart();
 
-	// const cartItemsAmount = cart.reduce((sumAmount, product) => {
-	//   // TODO
-	// }, {} as CartItemsAmount)
+	const cartItemsAmount = cart.reduce((acc, { id, amount }) => {
+		const total = acc[id] ? acc[id] + amount : amount;
 
-	useEffect(() => {
-		async function loadProducts() {
-			try {
-				const response = await api.get<Product[]>("/products");
+		return {
+			...acc,
+			[id]: total,
+		};
+	}, {} as CartItemsAmount);
 
-				const newProducts = response.data.map((item) => {
-					return {
-						...item,
-						priceFormatted: formatPrice(item.price),
-					};
-				});
+	async function loadProducts() {
+		try {
+			const response = await api.get<Product[]>("/products");
 
-				setProducts(newProducts);
-			} catch (error) {
-				toast.error("Erro ao carregar produtos!");
-			}
+			const newProducts = response.data.map((item) => {
+				return {
+					...item,
+					priceFormatted: formatPrice(item.price),
+				};
+			});
+
+			setProducts(newProducts);
+		} catch (error) {
+			toast.error("Erro ao carregar produtos!");
 		}
-
-		loadProducts();
-	}, []);
+	}
 
 	function handleAddProduct(id: number) {
 		addProduct(id);
 	}
+
+	useEffect(() => {
+		loadProducts();
+	}, []);
 
 	return (
 		<ProductList>
@@ -67,7 +72,8 @@ const Home = (): JSX.Element => {
 						onClick={() => handleAddProduct(product.id)}
 					>
 						<div data-testid="cart-product-quantity">
-							<MdAddShoppingCart size={16} color="#FFF" />0
+							<MdAddShoppingCart size={16} color="#FFF" />
+							{cartItemsAmount[product.id] ? cartItemsAmount[product.id] : 0}
 						</div>
 
 						<span>ADICIONAR AO CARRINHO</span>
