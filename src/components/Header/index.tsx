@@ -6,7 +6,7 @@ import { Container, Cart } from "./styles";
 
 export function Header() {
 	const { cart } = useCart();
-	// const cartSize = // TODO;
+	const cartSize = cart.length;
 
 	return (
 		<Container>
@@ -18,7 +18,7 @@ export function Header() {
 				<div>
 					<strong>Meu carrinho</strong>
 					<span data-testid="cart-size">
-						{/* {cartSize === 1 ? `${cartSize} item` : `${cartSize} itens`} */}
+						{cartSize === 1 ? `${cartSize} item` : `${cartSize} itens`}
 					</span>
 				</div>
 				<MdShoppingBasket size={36} color="#FFF" />

@@ -1,4 +1,3 @@
-import produce from "immer";
 import { createContext, ReactNode, useContext, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "../services/api";
@@ -24,10 +23,10 @@ const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
 	const [cart, setCart] = useState<Product[]>(() => {
-		const storagedCart = Buscar dados do localStorage
+		const storagedCart = localStorage.getItem("@RocketShoes:cart");
 
 		if (storagedCart) {
-		  return JSON.parse(storagedCart);
+			return JSON.parse(storagedCart);
 		}
 
 		return [];
@@ -36,23 +35,47 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 	const newCart = [...cart];
 
 	const addProduct = async (productId: number) => {
-		const isProductAlreadyInCart = newCart.findIndex(
+		let productStock = 0;
+
+		try {
+			const { data: StockInfo } = await api.get<Stock>(`/stock/${productId}`);
+
+			productStock = StockInfo.amount;
+		} catch (error) {
+			toast.error("Erro na adição do produto");
+			return;
+		}
+
+		const productIndex = newCart.findIndex(
 			(product) => product.id === productId
 		);
 
-		if (isProductAlreadyInCart <= 0) {
-			const { data } = await api.get<Omit<Product, "amount">>(
-				`/products/${productId}`
-			);
+		if (productIndex >= 0) {
+			const productAmount = newCart[productIndex].amount;
 
-			newCart.push({ ...data, amount: 1 });
-
-			setCart(newCart);
-		} else {
-			newCart[isProductAlreadyInCart].amount++;
-
-			setCart(newCart);
+			if (productAmount >= productStock) {
+				toast.error("Quantidade solicitada fora de estoque");
+				return;
+			} else {
+				newCart[productIndex].amount++;
+			}
 		}
+
+		if (productIndex < 0) {
+			try {
+				const { data: product } = await api.get<Product>(
+					`/products/${productId}`
+				);
+
+				newCart.push({ ...product, amount: 1 });
+			} catch (error) {
+				toast.error("Erro na adição do produto");
+			}
+		}
+
+		setCart(newCart);
+
+		localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
 	};
 
 	const removeProduct = (productId: number) => {

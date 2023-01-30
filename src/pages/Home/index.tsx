@@ -4,7 +4,7 @@ import { ProductList } from "./styles";
 import { api } from "../../services/api";
 import { formatPrice } from "../../util/format";
 import { useCart } from "../../hooks/useCart";
-import { useQuery } from "react-query";
+import { toast } from "react-toastify";
 
 interface Product {
 	id: number;
@@ -29,19 +29,34 @@ const Home = (): JSX.Element => {
 	//   // TODO
 	// }, {} as CartItemsAmount)
 
-	const { data } = useQuery(["load-items"], async () => {
-		const response = await api.get<Product[]>("/products");
+	useEffect(() => {
+		async function loadProducts() {
+			try {
+				const response = await api.get<Product[]>("/products");
 
-		return response.data;
-	});
+				const newProducts = response.data.map((item) => {
+					return {
+						...item,
+						priceFormatted: formatPrice(item.price),
+					};
+				});
+
+				setProducts(newProducts);
+			} catch (error) {
+				toast.error("Erro ao carregar produtos!");
+			}
+		}
+
+		loadProducts();
+	}, []);
 
 	function handleAddProduct(id: number) {
-		// TODO
+		addProduct(id);
 	}
 
 	return (
 		<ProductList>
-			{data?.map((product) => (
+			{products?.map((product) => (
 				<li key={product.id}>
 					<img src={product.image} alt={product.title} />
 					<strong>{product.title}</strong>
@@ -49,11 +64,10 @@ const Home = (): JSX.Element => {
 					<button
 						type="button"
 						data-testid="add-product-button"
-						onClick={() => addProduct(product.id)}
+						onClick={() => handleAddProduct(product.id)}
 					>
 						<div data-testid="cart-product-quantity">
-							<MdAddShoppingCart size={16} color="#FFF" />
-							{cart && cart[product.id]?.amount}
+							<MdAddShoppingCart size={16} color="#FFF" />0
 						</div>
 
 						<span>ADICIONAR AO CARRINHO</span>
